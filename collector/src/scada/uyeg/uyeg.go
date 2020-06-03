@@ -62,7 +62,6 @@ func (mb *ModbusClient) Connect() bool {
 	err := handler.Connect()
 	if err != nil {
 		fmt.Println(err.Error())
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err.Error()))
 		return false
 	}
 	return true

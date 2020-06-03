@@ -20,7 +20,6 @@ func (db *DataBase) Connect() {
 	sqlDsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", db.User, db.Password, db.Host, db.Port, db.Database)
 	conn, err := sql.Open("mysql", sqlDsn)
 	if err != nil {
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err))
 		panic(err)
 	}
 	db.Conn = conn

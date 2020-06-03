@@ -26,7 +26,6 @@ func GetConfiguration() Configuration {
 	err := gonfig.GetConf(getFileName(), &configuration)
 	if err != nil {
 		fmt.Println(err)
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err))
 		os.Exit(500)
 	}
 	return configuration
