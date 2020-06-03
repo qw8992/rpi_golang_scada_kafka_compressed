@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  mysqldb:
+    container_name: mysqldb
+    image: oraclian/rpi-mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: suin1098
+      MYSQL_DATABASE: uyeg
+      MYSQL_USER: its
+      MYSQL_PASSWORD: suin1098
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    restart: always
+    volumes:
+      - mysql:/var/lib/mysql
+  
+  web:
+    container_name: web
+    build:
+      context: ./web
+      dockerfile: ./Dockerfile
+    working_dir: /code
+    environment:
+      TZ: Asia/Seoul
+    ports:
+      - '8000:8000'
+    command:
+      - bash
+      - -c 
+      - | 
+        /wait-for-it.sh mysqldb:3306 -t 20
+        ./start.sh
+    restart: always
+    depends_on: 
+      - mysqldb
+
+  collector:
+    container_name: collector
+    build:
+      context: ./collector
+      dockerfile: ./Dockerfile
+    environment:
+      APP_ENV: dev
+      TZ: Asia/Seoul
+      GOTRACEBACK: crash
+    working_dir: /go
+    command: 
+      - bash
+      - -c 
+      - | 
+        /wait-for-it.sh web:8000 -t 10
+        ./start.sh
+    tty: true
+    restart: always
+    depends_on:
+      - web
+
+
+volumes:
+  mysql: {}

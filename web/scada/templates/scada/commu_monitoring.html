@@ -1,0 +1,67 @@
+{% extends 'scada/basic.html' %}
+{% load static %}
+
+{% block 'title' %}통신 모니터링{% endblock %}
+
+{% block 'head' %}
+<script src="{% static 'js/vue.min.js' %}"></script>
+{% endblock %}
+
+{% block 'content' %}
+<div class="row col-xs-12 pt-5">
+    <h2 class="col-12">통신 상태 모니터링</h2>
+</div>
+
+<div class="row col-xs-12 col-sm-12 col-md-9 col-lg-8 pt-2 mx-auto" id="grid-table">
+    <div class="col blockquote-footer text-right">최근 1분간 데이터입니다</div>
+    <table class="table table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th v-for="column in columns">{column}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="row in rows">
+                <td v-for="(column, index) in columns">{row[index]}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block 'script' %}
+var vm = new Vue({
+    delimiters: ["{", "}"],
+    el: "#grid-table",
+    data: {
+        columns: [],
+        rows: {
+
+        }
+    }
+});
+
+
+$.ajax({
+    type: "GET",
+    url: "/api/get/tfinfo/",
+    dataType: "JSON",
+    success: function(data) {
+        vm.columns = data.columns;
+        vm.rows = data.rows;
+    }
+});
+
+
+setInterval(function() {
+    $.ajax({
+        type: "GET",
+        url: "/api/get/tfinfo/",
+        dataType: "JSON",
+        success: function(data) {
+            vm.columns = data.columns;
+            vm.rows = data.rows;
+        }
+    });
+}, 1000);
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'scada/basic.html' %}
+{% load static %}
+
+{% block 'title' %}리소스 모니터링{% endblock %}
+
+{% block 'head' %}
+<script src="{% static 'js/chart.js' %}"></script>
+{% endblock %}
+
+{% block 'content' %}
+<div class="row col-12 p-3 m-0">
+    <div class="col-lg-6 col-xl-4 pt-3">
+        <div class="row col-12 m-0">
+            <div class="col-12 ">
+                <h5>CPU 사용률</h5>
+            </div>
+            <div class="col-12">
+                <canvas id="CPUChart"></canvas>
+            </div>
+            <div class="col-12" id="CPUValue">
+                <p>0%</p>
+            </div>
+        </div>
+
+        <div class="row col-12 pt-2 pb-4 m-0">
+            <div class="col-12">
+                <canvas id="CPULineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 col-xl-4 pt-3">
+        <div class="row col-12 m-0">
+            <div class="col-12">
+                <h5>Memory 사용률</h5>
+            </div>
+            <div class="col-12">
+                <canvas id="MemoryChart"></canvas>
+            </div>
+            <div class="col-12" id="MemoryValue">
+                <p>0%</p>
+            </div>
+        </div>
+
+        <div class="row col-12 pt-2 pb-4 m-0">
+            <div class="col-12">
+                <canvas id="MemoryLineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 col-xl-4 pt-3">
+        <div class="row col-12 m-0">
+            <div class="col-12">
+                <h5>디스크 사용률</h5>
+            </div>
+            <div class="col-12">
+                <canvas id="DiskChart"></canvas>
+            </div>
+            <div class="col-12" id="DiskValue">
+                <p>0%</p>
+            </div>
+        </div>
+
+        <div class="row col-12 pt-2 pb-4 m-0">
+            <div class="col-12">
+                <canvas id="DiskLineChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block 'script' %}
+Chart.defaults.global.tooltips.enabled = false;
+Chart.defaults.global.legend.display = false;
+
+var options = {
+    cutoutPercentage: 80,
+    rotation: Math.PI,
+    circumference: Math.PI
+}
+
+var lineOptions = {
+    scales: {
+        yAxes: [{
+            ticks: {
+                suggestedMin: 0,
+                suggestedMax: 100
+            },
+            gridLines: {
+                display: true
+            }
+        }],
+        xAxes: [{
+            stacked: true,
+            ticks: {
+                display: false
+            },
+            gridLines: {
+                display: false
+            }
+        }]
+    },
+    legend: {
+        display: false
+    }
+}
+
+var cpuChart = new Chart('CPUChart', {
+    type: 'doughnut',
+    data: {
+        labels: ['Red', 'White'],
+        datasets: [{
+            label: 'Gauge',
+            data: [0, 100],
+            backgroundColor: [
+                "rgb(64, 128, 191)",
+                "rgb(216, 216, 216)",
+            ]
+        }]
+    },
+    options: options
+});
+
+var memoryChart = new Chart('MemoryChart', {
+    type: 'doughnut',
+    data: {
+        labels: ['Red', 'White'],
+        datasets: [{
+            label: 'Gauge',
+            data: [0, 100],
+            backgroundColor: [
+                "rgb(128, 64, 191)",
+                "rgb(216, 216, 216)",
+            ]
+        }]
+    },
+    options: options
+});
+
+var diskChart = new Chart('DiskChart', {
+    type: 'doughnut',
+    data: {
+        labels: ['Red', 'White'],
+        datasets: [{
+            label: 'Gauge',
+            data: [0, 100],
+            backgroundColor: [
+                "rgb(64, 191, 64)",
+                "rgb(216, 216, 216)",
+            ]
+        }]
+    },
+    options: options
+});
+
+function change_gauge(chart, label, data){
+    chart.data.datasets.forEach((dataset) => {
+        if(dataset.label == label){
+        dataset.data = data;
+        }
+    });
+    chart.update();
+}
+
+function change_value(cpu, memory, disk) {
+    $("#CPUValue").html(cpu.toString() + "%");
+    $("#MemoryValue").html(memory.toString() + "%");
+    $("#DiskValue").html(disk.toString() + "%");
+}
+
+var cpuLineChart = new Chart('CPULineChart', {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            pointRadius: 2
+        }]
+    },
+    options: lineOptions
+});
+
+var memoryLineChart = new Chart('MemoryLineChart', {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            pointRadius: 2
+        }]
+    },
+    options: lineOptions
+});
+
+var diskLineChart = new Chart('DiskLineChart', {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            pointRadius: 2
+        }]
+    },
+    options: lineOptions
+});
+
+function addData(chart, label, data) {
+    chart.data.labels.push(label);
+    chart.data.datasets[0].data.push(data);
+    chart.update();
+};
+
+function removeData(chart) {
+    chart.data.labels.shift();
+    chart.data.datasets.forEach((dataset) => {
+        dataset.data.shift();
+    });
+};
+
+setInterval(function() {
+    $.ajax({
+        type: "GET",
+        url: "/api/get/resource/",
+        dataType: "JSON",
+        success: function(data) {
+            change_gauge(cpuChart, "Gauge", [data.cpu[0], 100-data.cpu[0]]);
+            change_gauge(memoryChart, "Gauge", [data.memory[0], 100-data.memory[0]]);
+            change_gauge(diskChart, "Gauge", [data.disk[0], 100-data.disk[0]]);
+
+            change_value(data.cpu[0], data.memory[0], data.disk[0]);
+
+            if (cpuLineChart.data.labels.length >= 60) {
+                removeData(cpuLineChart);
+                removeData(memoryLineChart);
+                removeData(diskLineChart);
+            }
+
+            addData(cpuLineChart, data.nowTime[0], data.cpu[0]);
+            addData(memoryLineChart, data.nowTime[0], data.memory[0]);
+            addData(diskLineChart, data.nowTime[0], data.disk[0]);
+        }
+    });
+}, 1000);
+{% endblock %}

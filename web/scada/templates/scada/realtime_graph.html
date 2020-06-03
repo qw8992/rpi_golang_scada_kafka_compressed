@@ -1,0 +1,160 @@
+{% extends 'scada/basic.html' %}
+{% load static %}
+
+{% block 'title' %}실시간 모니터링{% endblock %}
+
+{% block 'head' %}
+<script src="{% static 'js/chart.js' %}"></script>
+{% endblock %}
+
+{% block 'content' %}
+
+<div class="col-sm-12 col-md-10 mx-auto mt-3 mx-0 px-0 pb-3">
+  <h2><strong>실시간 모니터링</strong></h2>
+  
+  <div class="row">
+    <div style="width: 200px;">
+	  <select id="form-select" onchange="changeFormSelectBox()">
+        {% for device in object_list %}
+          <option value="{{device.mac_id}}">{{device.name}} - ( MAC_ID : {{device.mac_id}} )</option>
+	    {% endfor %}
+	  </select>
+    </div>
+  </div>
+  
+  <div class="row" style="min-height: 500px; max-height: 600px;">
+    <canvas id="myChart" width="300" height="120"></canvas>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block 'script' %}
+
+var selectBox = document.getElementById('form-select');
+var selectValue = selectBox.options[selectBox.selectedIndex].value;
+
+data = {
+    labels: [],
+    datasets: [{
+        data: [],
+        label: "max_current",
+        borderColor: "#D1B6E1",
+        lineTension: 0.1,
+        pointRadius: 1,
+        pointHoverRadius: 10,
+        fill: false,
+        borderWidth: 2
+    }, {
+        data: [],
+        label: "current_r",
+        borderColor: "#9DC8C8",
+        lineTension: 0.1,
+        pointRadius: 1,
+        pointHoverRadius: 10,
+        fill: false,
+        borderWidth: 2
+    }, {
+        data: [],
+        label: "current_s",
+        borderColor: "#58C9B9",
+        lineTension: 0.1,
+        pointRadius: 1,
+        pointHoverRadius: 10,
+        fill: false,
+        borderWidth: 2
+    }, {
+        data: [],
+        label: "current_t",
+        borderColor: "#519D9E",
+        lineTension: 0.1,
+        pointRadius: 1,
+        pointHoverRadius: 10,
+        fill: false,
+        borderWidth: 2
+    }],
+}
+
+options = {
+    maintainAspectRatio: false,
+    scales: {
+        xAxes: [{
+			type: 'time',
+            distribution: 'series'
+        }],
+		yAxes: [{
+			ticks: {
+				min: 0,
+			}
+		}],
+    }
+}
+
+Chart.defaults.global.showTooltips = false;
+Chart.defaults.global.animation.duration = 0;
+
+var ctx = document.getElementById('myChart').getContext('2d');
+var myChart = new Chart(ctx, {
+	type: 'line',
+	data: JSON.parse(JSON.stringify(data)),
+	options: options,
+});
+
+var repeat = setInterval(function() {
+	$.ajax({
+		type: "GET",
+		url: `/api/get/oneminute?MAC_ID=${getSelectBoxValue()}`,
+		dataType: "JSON",
+		success: function(data) {
+			myChart.data.labels = data.DATASAVEDTIME.map(function(times) {
+				sl = times.split(' ');
+				return new Date(sl[0] + ' ' + sl[1] + '.' + sl[2].slice(0, 3));
+			});
+			myChart.data.datasets[0].data = data.MAX_CURRENT;
+			myChart.data.datasets[1].data = data.CURRENT_R;
+			myChart.data.datasets[2].data = data.CURRENT_S;
+			myChart.data.datasets[3].data = data.CURRENT_T;
+			myChart.update();
+		}
+	});
+}, 1000);
+
+function createChart(selectValue) {
+	myChart = new Chart(ctx, {
+		type: 'line',
+		data: JSON.parse(JSON.stringify(data)),
+		options: options,
+	});
+}
+
+function getSelectBoxValue () {
+	var selectBox = document.getElementById('form-select');
+	return selectBox.options[selectBox.selectedIndex].value;
+}
+
+function changeFormSelectBox() {
+	myChart.destroy();	
+	createChart(selectValue);
+	
+	clearInterval(repeat);
+	repeat = setInterval(function() {
+		$.ajax({
+			type: "GET",
+			url: `/api/get/oneminute?MAC_ID=${getSelectBoxValue()}`,
+			dataType: "JSON",
+			success: function(data) {
+				myChart.data.labels = data.DATASAVEDTIME.map(function(times) {
+					sl = times.split(' ');
+					return new Date(sl[0] + ' ' + sl[1] + '.' + sl[2].slice(0, 3));
+				});
+				myChart.data.datasets[0].data = data.MAX_CURRENT;
+				myChart.data.datasets[1].data = data.CURRENT_R;
+				myChart.data.datasets[2].data = data.CURRENT_S;
+				myChart.data.datasets[3].data = data.CURRENT_T;
+				myChart.update();
+			}
+		});
+	}, 1000);
+}
+
+{% endblock %}
