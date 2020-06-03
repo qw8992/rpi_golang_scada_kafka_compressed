@@ -74,11 +74,9 @@ func GetCompressedString(data []byte) string {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write(data); err != nil {
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err))
 		log.Panic(err)
 	}
 	if err := gz.Close(); err != nil {
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err))
 		log.Panic(err)
 	}
 	return string(b.Bytes())
@@ -100,7 +98,6 @@ func SendRequest(packet string) {
 	//req, err := http.NewRequest("POST", "http://106.255.236.186:9210/api", bytes.NewBuffer([]byte(packet)))
 	req, err := http.NewRequest("POST", conf.API_URL, bytes.NewBuffer([]byte(packet)))
 	if err != nil {
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err))
 		log.Panic(err)
 	}
 	req.Header.Add("Content-Type", "text/plain")
@@ -109,7 +106,6 @@ func SendRequest(packet string) {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err))
 		log.Panic(err)
 	}
 	defer res.Body.Close()
