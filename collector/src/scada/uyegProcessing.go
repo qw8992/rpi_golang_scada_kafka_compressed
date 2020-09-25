@@ -79,13 +79,14 @@ func QueueProcess(client *uyeg.ModbusClient, queue *ItemQueue, tfChan chan<- []i
 					//	fmt.Println("nowtime : ", t, "t2: ", t2, "bSecT: ", bSecT)
 
 					// .000 부터 데이터 비교.
-					noData := false
 					for i := 0; i < 1000/client.Device.ProcessInterval; i++ {
 						vT := bSecT.Add(time.Duration(i*client.Device.ProcessInterval) * time.Millisecond).Format(TimeFormat)
 						if val, exists := sMap[vT]; exists == true { // 데이터가 있는 경우.
 							value := val.(map[string]interface{})
 							value["status"] = true
+							//							fmt.Println("1 :", ds)
 							ds = append(ds, value)
+							//							fmt.Println("2 :", ds)
 							lastData = val.(map[string]interface{}) // 마지막 데이터를 초기화 시킨다.
 							syncMap.Delete(vT)                      // 추가한 데이터는 삭제한다.
 						} else { // 데이터가 없는 경우.
@@ -93,7 +94,9 @@ func QueueProcess(client *uyeg.ModbusClient, queue *ItemQueue, tfChan chan<- []i
 								ld := CopyMap(lastData)
 								ld["time"] = bSecT.Format(TimeFormat)
 								ld["status"] = false
+								//								fmt.Println("1 :", ds)
 								ds = append(ds, ld)
+								//								fmt.Println("2 :", ds)
 							}
 							fmt.Println(" No Data ", vT)
 
@@ -103,17 +106,13 @@ func QueueProcess(client *uyeg.ModbusClient, queue *ItemQueue, tfChan chan<- []i
 							derr["Restart"] = false
 
 							ErrChan <- derr
-							noData = true
 							dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('%s', '%s', NOW());", client.Device.MacId, derr["Error"].(string)))
 						}
 					}
-					if noData == false {
-						tfChan <- ds
-						ds = ds[:0] // 데이터 삭제
-					}
+					tfChan <- ds
+					ds = ds[:0] // 데이터 삭제
 				}
 			}
-			//fmt.Println(time.Now())
 			time.Sleep(1 * time.Millisecond)
 		}
 		time.Sleep(1 * time.Millisecond)

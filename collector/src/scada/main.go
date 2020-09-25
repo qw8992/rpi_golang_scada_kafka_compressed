@@ -76,8 +76,8 @@ func startProgram() {
 				delete(addedDs, id)
 			}
 
-			fmt.Println("=>", derr["Error"].(string))
-			fmt.Println("=> This device will be disabled.")
+//			fmt.Println("=>", derr["Error"].(string))
+//			fmt.Println("=> This device will be disabled.")
 		default:
 			devices := GetEnabledDevices(&dbConn)
 			if reflect.DeepEqual(addedDs, devices) {

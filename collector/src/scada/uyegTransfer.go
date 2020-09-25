@@ -1,13 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+
 	//"log"
 	//"os"
 	"scada/uyeg"
 )
 
-func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}) {
+func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chInsertData chan map[string]interface{}) {
 	for {
 		select {
 		case <-client.Done3:
@@ -17,11 +19,14 @@ func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}) {
 			d := data[0].(map[string]interface{})
 			if t, exists := d["time"]; exists {
 				bSecT := t.(string)[:len(TimeFormat)-4]
+				fmt.Println(bSecT)
 				jsonBytes := client.GetRemapJson(bSecT, data)
-				SendRequest(GetCompressedString(jsonBytes))
-				fmt.Println("Mac ", client.Device.MacId, " send Time:", t)
-				logs := fmt.Sprintf("Mac %s send Time: %s", client.Device.MacId, t)
-				dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO S_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('%s', '%s', NOW());", client.Device.MacId, logs))
+
+				dataSecond := make(map[string]interface{})
+				json.Unmarshal(jsonBytes, &dataSecond)
+				// fmt.Println(string(jsonBytes))
+
+				chInsertData <- dataSecond
 			}
 		}
 	}

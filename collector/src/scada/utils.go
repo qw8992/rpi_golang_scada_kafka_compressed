@@ -3,13 +3,13 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"scada/db"
 	"scada/uyeg"
 	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
 // Loc 변수는 서울 타임존을 의미
@@ -27,7 +27,6 @@ func GetEnabledDevices(dbConn *db.DataBase) map[int]uyeg.Device {
 
 	if err != nil {
 		fmt.Println(err.Error())
-		dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('system', '%s', NOW());", err.Error()))
 		return map[int]uyeg.Device{}
 	}
 
@@ -79,6 +78,7 @@ func GetCompressedString(data []byte) string {
 	if err := gz.Close(); err != nil {
 		log.Panic(err)
 	}
+	// fmt.Println(b.Bytes())
 	return string(b.Bytes())
 }
 
@@ -92,23 +92,33 @@ func SendRequest(packet string) {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-		
+	// ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	// defer cancel()
+
 	//req, err := http.NewRequest("POST", "http://106.255.236.186:9210/api", bytes.NewBuffer([]byte(packet)))
-	req, err := http.NewRequest("POST", conf.API_URL, bytes.NewBuffer([]byte(packet)))
-	if err != nil {
-		log.Panic(err)
-	}
+	// req, err := http.NewRequest("POST", conf.API_URL, bytes.NewBuffer([]byte(packet)))
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
+	// req.Header.Add("Content-Type", "text/plain")
+	// req = req.WithContext(ctx)
+
+	// client := &http.Client{}
+	// res, err := client.Do(req)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
+	// defer res.Body.Close()
+
+	req := fasthttp.AcquireRequest()
+	req.SetRequestURI(conf.API_URL)
 	req.Header.Add("Content-Type", "text/plain")
-	req = req.WithContext(ctx)
+	req.Header.SetMethod("POST")
+	req.SetBody([]byte(packet))
 
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer res.Body.Close()
+	res := fasthttp.AcquireResponse()
+	client := &fasthttp.Client{}
+	client.Do(req, res)
 
-	//fmt.Println(res.StatusCode)
+	fmt.Println(req)
 }
