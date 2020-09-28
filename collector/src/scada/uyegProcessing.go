@@ -92,7 +92,7 @@ func QueueProcess(client *uyeg.ModbusClient, queue *ItemQueue, tfChan chan<- []i
 						} else { // 데이터가 없는 경우.
 							if lastData != nil {
 								ld := CopyMap(lastData)
-								ld["time"] = bSecT.Format(TimeFormat)
+								ld["time"] = vT
 								ld["status"] = false
 								//								fmt.Println("1 :", ds)
 								ds = append(ds, ld)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"reflect"
 	"sort"
@@ -29,7 +28,7 @@ func influxDataInsert(chInserData chan map[string]interface{}) {
 
 func influxDBClient() client.Client {
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://192.168.101.60:8084/influxdb/",
+		Addr:     "http://106.255.236.186:8084/influxdb/",
 		Username: username,
 		Password: password,
 		Timeout:  10 * time.Second,
@@ -60,7 +59,6 @@ func createMetrics(c client.Client, chInserData chan map[string]interface{}) {
 			keySec := orderKey(data)
 			tempStrSec := strings.Join(keySec[:], ",")
 			tempStrSec = strings.Replace(tempStrSec, ",time", "", 1)
-			fmt.Println(tempStrSec)
 			tempStrSec = strings.Replace(tempStrSec, ",ver", "", 1)
 			tempStrSec = strings.Replace(tempStrSec, ",gateway", "", 1)
 			tempStrSec = strings.Replace(tempStrSec, ",mac", "", 1)
