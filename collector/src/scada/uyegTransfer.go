@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	//"log"
@@ -9,7 +8,7 @@ import (
 	"scada/uyeg"
 )
 
-func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chInsertData chan map[string]interface{}) {
+func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chValue chan []byte) {
 	for {
 		select {
 		case <-client.Done3:
@@ -21,12 +20,10 @@ func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chInse
 				bSecT := t.(string)[:len(TimeFormat)-4]
 				fmt.Println(bSecT)
 				jsonBytes := client.GetRemapJson(bSecT, data)
+				// jsonData := fmt.Sprint(string(jsonBytes))
+				// fmt.Println(jsonData)
 
-				dataSecond := make(map[string]interface{})
-				json.Unmarshal(jsonBytes, &dataSecond)
-				// fmt.Println(string(jsonBytes))
-
-				chInsertData <- dataSecond
+				chValue <- jsonBytes
 			}
 		}
 	}

@@ -107,6 +107,7 @@ func QueueProcess(client *uyeg.ModbusClient, queue *ItemQueue, tfChan chan<- []i
 
 							ErrChan <- derr
 							dbConn.NotResultQueryExec(fmt.Sprintf("INSERT INTO E_LOG(MAC_ID, LOG, CREATE_DATE) VALUES ('%s', '%s', NOW());", client.Device.MacId, derr["Error"].(string)))
+							fmt.Println(client.Device.MacId)
 						}
 					}
 					tfChan <- ds
