@@ -32,9 +32,9 @@ func UYeGStartFunc(client *uyeg.ModbusClient) {
 
 	collChan := make(chan map[string]interface{}, 20)
 	tfChan := make(chan []interface{}, 20)
-	chValue := make(chan []byte)
+	chValue := make(chan string)
 
-	go kafka(chValue)
+	go kafka(chValue, client)
 	go UYeGTransfer(client, tfChan, chValue)
 	go UYeGProcessing(client, collChan, tfChan)
 	go UYeGDataCollection(client, collChan)

@@ -8,7 +8,7 @@ import (
 	"scada/uyeg"
 )
 
-func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chValue chan []byte) {
+func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chValue chan string) {
 	for {
 		select {
 		case <-client.Done3:
@@ -18,12 +18,11 @@ func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chValu
 			d := data[0].(map[string]interface{})
 			if t, exists := d["time"]; exists {
 				bSecT := t.(string)[:len(TimeFormat)-4]
-				fmt.Println(bSecT)
 				jsonBytes := client.GetRemapJson(bSecT, data)
 				// jsonData := fmt.Sprint(string(jsonBytes))
 				// fmt.Println(jsonData)
-
-				chValue <- jsonBytes
+				jsonData := fmt.Sprint(GetCompressedString(jsonBytes))
+				chValue <- jsonData
 			}
 		}
 	}

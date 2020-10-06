@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"scada/uyeg"
 
 	"github.com/Shopify/sarama"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -14,7 +14,7 @@ var (
 	topic      = kingpin.Flag("topic", "Topic name").Default("Default").String()
 )
 
-func kafka(chValue chan []byte) {
+func kafka(chValue chan string, client *uyeg.ModbusClient) {
 	//kafka_Setting
 	kingpin.Parse()
 	config := sarama.NewConfig()
@@ -44,16 +44,14 @@ func kafka(chValue chan []byte) {
 		select {
 		case values := <-chValue:
 			// fmt.Println(string(values))
-			messageSend(producer, values)
+			messageSend(producer, values, client)
 			// fmt.Println(sarama.StringEncoder(values))
 		}
 	}
 }
 
-func messageSend(producer sarama.SyncProducer, values []byte) {
-	dataSecond := make(map[string]interface{})
-	json.Unmarshal(values, &dataSecond)
-	*topic = fmt.Sprintf("%s", dataSecond["gateway"].(string))
+func messageSend(producer sarama.SyncProducer, values string, client *uyeg.ModbusClient) {
+	*topic = client.Device.GatewayId
 	msg := &sarama.ProducerMessage{
 		Topic: *topic,
 		Value: sarama.StringEncoder(values),
