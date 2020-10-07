@@ -43,20 +43,17 @@ func kafka(chValue chan string, client *uyeg.ModbusClient) {
 	for {
 		select {
 		case values := <-chValue:
-			// fmt.Println(string(values))
 			messageSend(producer, values, client)
-			// fmt.Println(sarama.StringEncoder(values))
 		}
 	}
 }
 
 func messageSend(producer sarama.SyncProducer, values string, client *uyeg.ModbusClient) {
-	*topic = client.Device.GatewayId
+	*topic = fmt.Sprintf("m%s", client.Device.GatewayId)
 	msg := &sarama.ProducerMessage{
 		Topic: *topic,
 		Value: sarama.StringEncoder(values),
 	}
-
 	partition, offset, err := producer.SendMessage(msg)
 	if err != nil {
 		panic(err)

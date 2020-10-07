@@ -19,8 +19,6 @@ func UYeGTransfer(client *uyeg.ModbusClient, tfChan <-chan []interface{}, chValu
 			if t, exists := d["time"]; exists {
 				bSecT := t.(string)[:len(TimeFormat)-4]
 				jsonBytes := client.GetRemapJson(bSecT, data)
-				// jsonData := fmt.Sprint(string(jsonBytes))
-				// fmt.Println(jsonData)
 				jsonData := fmt.Sprint(GetCompressedString(jsonBytes))
 				chValue <- jsonData
 			}

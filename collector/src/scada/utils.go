@@ -92,24 +92,6 @@ func SendRequest(packet string) {
 		}
 	}()
 
-	// ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	// defer cancel()
-
-	//req, err := http.NewRequest("POST", "http://106.255.236.186:9210/api", bytes.NewBuffer([]byte(packet)))
-	// req, err := http.NewRequest("POST", conf.API_URL, bytes.NewBuffer([]byte(packet)))
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
-	// req.Header.Add("Content-Type", "text/plain")
-	// req = req.WithContext(ctx)
-
-	// client := &http.Client{}
-	// res, err := client.Do(req)
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
-	// defer res.Body.Close()
-
 	req := fasthttp.AcquireRequest()
 	req.SetRequestURI(conf.API_URL)
 	req.Header.Add("Content-Type", "text/plain")
